@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 LINEAR_GRAPHQL_ENDPOINT = "https://api.linear.app/graphql"
 
+
 class LinearClient:
     def __init__(self, api_key: str):
         self.api_key = api_key
