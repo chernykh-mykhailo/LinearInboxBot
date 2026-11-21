@@ -1,6 +1,7 @@
 import html
 import io
 import logging
+import time
 from typing import Any, Dict
 from aiogram import Bot, Router, F, types
 from aiogram.types import CallbackQuery
@@ -17,6 +18,9 @@ router = Router(name="issues")
 
 # In-memory storage for active draft issues
 pending_drafts: Dict[int, Dict[str, Any]] = {}
+
+# Media groups (photo albums) deduplication
+recent_media_groups: Dict[str, float] = {}
 
 PRIORITY_LABELS_UK = {
     0: "⚪ Без пріоритету",
@@ -133,26 +137,63 @@ def register_issues_router(linear: LinearClient) -> Router:
 
     # 2. Text & Screenshot messages
     @router.message(F.text | F.photo)
-    async def handle_text_or_photo(message: types.Message):
+    async def handle_text_or_photo(message: types.Message, bot: Bot):
         if not is_authorized(message.from_user.id):
-            return
-
-        raw_text = message.text or message.caption or ""
-        if not raw_text.strip():
-            await message.answer("⚠️ Send some text, voice note, or screenshot with caption.")
             return
 
         settings = get_user_settings(message.from_user.id)
         ai_enabled = settings.get("ai_enabled", True)
         lang = settings.get("language", "uk")
 
-        # If user has AI enabled and Gemini key is configured -> run enhancement
+        raw_text = message.text or message.caption or ""
+
+        # Handle albums (media groups) where subsequent photos have no caption
+        if message.media_group_id:
+            now = time.time()
+            # Clean up records older than 60 seconds
+            stale_keys = [k for k, v in recent_media_groups.items() if now - v > 60]
+            for k in stale_keys:
+                recent_media_groups.pop(k, None)
+
+            if not raw_text.strip():
+                # If this photo in an album has no caption and album was already seen -> ignore
+                if message.media_group_id in recent_media_groups:
+                    return
+                recent_media_groups[message.media_group_id] = now
+            else:
+                recent_media_groups[message.media_group_id] = now
+
+        if not raw_text.strip():
+            msg = (
+                "⚠️ Send some text, voice note, or screenshot with caption."
+                if lang == "en"
+                else "⚠️ Надішліть текст, голосове повідомлення або скріншот із описом задачі."
+            )
+            await message.answer(msg)
+            return
+
+        # If user has AI enabled and Gemini key is configured -> run multimodal enhancement
         if ai_enabled and ai_service.is_configured():
             status_msg = await message.reply(
                 "✨ <i>Structuring task via AI...</i>" if lang == "en" else "✨ <i>Форматую задачу через AI...</i>"
             )
             try:
-                result = await ai_service.enhance_text_task(raw_text, language=lang)
+                photo_bytes = None
+                if message.photo:
+                    try:
+                        photo = message.photo[-1]
+                        file_info = await bot.get_file(photo.file_id)
+                        stream = io.BytesIO()
+                        await bot.download_file(file_info.file_path, stream)
+                        photo_bytes = stream.getvalue()
+                    except Exception as img_err:
+                        logger.warning(f"Failed to fetch photo for AI vision: {img_err}")
+
+                result = await ai_service.enhance_text_task(
+                    raw_text=raw_text,
+                    image_bytes=photo_bytes,
+                    language=lang,
+                )
 
                 desc = result["description"]
                 if message.photo:

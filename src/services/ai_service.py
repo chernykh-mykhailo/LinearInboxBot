@@ -92,7 +92,13 @@ class AIService:
                 "transcript": fallback_text,
             }
 
-    async def enhance_text_task(self, raw_text: str, language: str = "uk") -> Dict[str, Any]:
+    async def enhance_text_task(
+        self,
+        raw_text: str,
+        image_bytes: Optional[bytes] = None,
+        image_mime_type: str = "image/jpeg",
+        language: str = "uk",
+    ) -> Dict[str, Any]:
         lang_directive = (
             "Write the title and description in Ukrainian."
             if language == "uk"
@@ -100,14 +106,15 @@ class AIService:
         )
 
         system_instruction = f"""
-You are an expert product manager and software engineer assistant converting raw notes into professional Linear issues.
+You are an expert product manager and software engineer assistant converting raw notes and screenshots into professional Linear issues.
 {lang_directive}
 
 Rules:
 1. title: Short, concise, action-oriented task title (max 70 characters). Start with an imperative verb (e.g., 'Fix...', 'Add...', 'Refactor...', 'Implement...').
-2. description: Well-structured Markdown. Include:
+   IMPORTANT: If the user mentions multiple problems or items (e.g., 'Fix audio button, fix white screen glitch'), make sure the title covers ALL requested items or summarizes them together. Never drop any part of the request.
+2. description: Well-structured Markdown. If a screenshot is provided, analyze the visual interface and incorporate relevant visual context into the problem description. Include:
    - ## Context (brief problem or idea explanation)
-   - ## Proposed Solution / Acceptance Criteria (bullet points)
+   - ## Proposed Solution / Acceptance Criteria (bullet points covering every reported problem)
 3. priority: Linear priority integer:
    0 = No priority / Backlog
    1 = Urgent (P0 / critical bug)
@@ -122,12 +129,18 @@ Respond ONLY with valid JSON matching this schema:
   "priority": 0
 }}
 """
-        contents = [
-            {
-                "role": "user",
-                "parts": [{"text": f"Raw user note:\n{raw_text}"}],
-            }
-        ]
+        parts = [{"text": f"Raw user note:\n{raw_text}"}]
+        if image_bytes:
+            parts.append(
+                {
+                    "inline_data": {
+                        "mime_type": image_mime_type,
+                        "data": base64.b64encode(image_bytes).decode("utf-8"),
+                    }
+                }
+            )
+
+        contents = [{"role": "user", "parts": parts}]
 
         raw_output = await self._call_gemini(contents, system_instruction)
         if not raw_output:
