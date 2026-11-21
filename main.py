@@ -5,6 +5,7 @@ import sys
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
+from aiogram.types import BotCommand, BotCommandScopeDefault
 
 from src.config import BOT_TOKEN, LINEAR_API_KEY
 from src.linear_client import LinearClient
@@ -40,6 +41,17 @@ async def main():
     dp.include_router(register_settings_router())
     dp.include_router(register_tasks_router(linear))
     dp.include_router(register_issues_router(linear))
+
+    # Register bot commands menu in Telegram UI
+    await bot.set_my_commands(
+        [
+            BotCommand(command="tasks", description="📋 Активні задачі та фільтри"),
+            BotCommand(command="settings", description="⚙️ Налаштування ШІ та мови"),
+            BotCommand(command="reload", description="🔄 Оновити проєкти Linear"),
+            BotCommand(command="start", description="⚡ Головне меню та статус"),
+        ],
+        scope=BotCommandScopeDefault(),
+    )
 
     logger.info("Starting Telegram Bot Polling...")
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
