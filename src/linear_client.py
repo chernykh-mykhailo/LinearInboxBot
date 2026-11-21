@@ -80,6 +80,7 @@ class LinearClient:
         description: Optional[str] = None,
         team_id: Optional[str] = None,
         project_id: Optional[str] = None,
+        priority: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Creates a new issue in Linear."""
         if not team_id:
@@ -113,6 +114,8 @@ class LinearClient:
             issue_input["description"] = description
         if project_id:
             issue_input["projectId"] = project_id
+        if priority is not None and priority in (0, 1, 2, 3, 4):
+            issue_input["priority"] = priority
 
         data = await self.execute_query(mutation, {"input": issue_input})
         result = data.get("issueCreate", {})

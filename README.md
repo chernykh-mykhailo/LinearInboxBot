@@ -3,32 +3,42 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![aiogram 3.x](https://img.shields.io/badge/aiogram-3.x-009dc4.svg)](https://docs.aiogram.dev/)
 [![Docker](https://img.shields.io/badge/docker-ready-2496ed.svg)](https://www.docker.com/)
+[![Gemini Flash](https://img.shields.io/badge/AI-Gemini%20Flash-8e44ad.svg)](https://aistudio.google.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A lightweight, developer-first Telegram bot that instantly captures ideas, bug reports, and tasks directly into your [Linear](https://linear.app) workspace with dynamic inline project routing.
+A smart, lightweight Telegram bot that captures ideas, bug reports, and voice memos directly into your [Linear](https://linear.app) workspace with AI structuring and one-tap project routing.
 
 ---
 
 ## 🎯 How It Works
 
-1. Send any quick thought, forwarded message, or screenshot to your private Telegram bot:
-   > *"Add particle effects on player jump"*
-2. The bot fetches your active workspace projects via Linear's GraphQL API and presents an interactive inline menu:
-   - `[ 📱 Mobile App ]`
-   - `[ 🌐 Web Platform ]`
-   - `[ 🎮 Game Client ]`
-   - `[ 🛠️ Backend API ]`
-   - `[ 📥 General Inbox ]`
-3. Tap the target project with one thumb — the issue is **immediately created in Linear** and returns a direct issue link (e.g. `[ENG-42]`).
+1. **Send anything to the bot:**
+   - 🎙 **Voice note:** *"Record a quick memo while on the go"*
+   - 💬 **Text thought:** *"Fix sticky header jitter on mobile Safari"*
+   - 📸 **Screenshot:** Bug picture with or without a caption
+2. **AI Structuring & Review (Gemini Flash):**
+   - Transcribes audio natively with high accuracy (Ukrainian & English).
+   - Generates an actionable title, context, acceptance criteria, and priority level (`P0`–`P3`).
+   - Presents an interactive preview:
+     - `[ 📁 Choose Project & Save ]`
+     - `[ 🔄 Regenerate ]`
+     - `[ 📝 Save as Raw Text ]`
+     - `[ ❌ Cancel ]`
+3. **One-tap Linear routing:**
+   - Tap your target Linear project — the issue is instantly created in Linear and returns a direct issue link (e.g. `[ENG-42]`).
 
 ---
 
 ## ✨ Features
 
+- **🎙 Voice Message Transcription:** Natively transcribes `.ogg` voice notes via Gemini Flash without ffmpeg or local Whisper overhead.
+- **🤖 AI Task Structuring:** Turns rambling thoughts or bullet points into clear Linear tasks with context and acceptance criteria.
+- **⚙️ Full Control (`/settings`):** Toggle AI formatting ON/OFF or switch between Ukrainian 🇺🇦 and English 🇬🇧 at any time.
 - **Dynamic Project Discovery:** Automatically queries active Linear projects and teams on startup and on `/reload`.
-- **Photo & Screenshot Support:** Send bug screenshots directly from mobile; the bot notes media attachments in the task description.
-- **Access Control:** Restrict bot usage strictly to your Telegram User ID (`ALLOWED_USER_IDS`) to prevent unauthorized entries.
-- **Ultra Lightweight:** Clean async code (`aiogram 3` + `httpx`), consumes only ~15–20 MB of RAM in Docker.
+- **Photo & Screenshot Support:** Attaches notes for screenshots sent directly from mobile.
+- **Strict Access Control:** Restrict bot usage strictly to your Telegram User ID (`ALLOWED_USER_IDS`).
+- **Persistent Settings:** Remembers your AI & language preferences in persistent storage (`data/settings.json`).
+- **Ultra Lightweight:** Modular async architecture (`aiogram 3` + `httpx`), uses only ~25 MB RAM in Docker.
 
 ---
 
@@ -36,16 +46,16 @@ A lightweight, developer-first Telegram bot that instantly captures ideas, bug r
 
 ### 1. Telegram Bot Token
 1. Open [@BotFather](https://t.me/BotFather) on Telegram.
-2. Send `/newbot`, choose a name (e.g., `My Linear Inbox`) and username (e.g., `my_linear_inbox_bot`).
+2. Send `/newbot`, choose a name and username.
 3. Copy the HTTP API token.
 
 ### 2. Linear Personal API Key
-1. Go to [Linear Settings](https://linear.app) ➔ **My Account** ➔ **Security & Access**.
-2. Scroll to **Personal API keys** ➔ Click **Create key**.
-3. Name it `Telegram Inbox` and copy the generated token (`lin_api_...`).
+1. Go to [Linear Settings](https://linear.app) ➔ **Security & access** ➔ **Personal API keys**.
+2. Click **Create key**, name it `Telegram Inbox` and copy the generated token (`lin_api_...`).
 
-### 3. Your Telegram User ID (Optional Security)
-1. Send any message to [@userinfobot](https://t.me/userinfobot) to get your numeric Telegram ID (e.g., `123456789`).
+### 3. Google Gemini API Key (For Voice & AI Structuring)
+1. Get a free API key at [Google AI Studio](https://aistudio.google.com/).
+2. Copy the API key. *(Optional: bot runs in raw mode if key is omitted).*
 
 ### 4. Configuration
 Create a `.env` file in the project root:
@@ -53,6 +63,7 @@ Create a `.env` file in the project root:
 ```env
 TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ
 LINEAR_API_KEY=lin_api_xxxxxxxxxxxxxxxxxxxxxxxx
+GEMINI_API_KEY=AIzaSyxxxxxxxxxxxxxxxxxxxxxxx
 ALLOWED_USER_IDS=123456789
 ```
 
@@ -73,12 +84,12 @@ pip install -r requirements.txt
 python main.py
 ```
 
-### Option B: Docker Compose (Recommended for VPS / Oracle Cloud)
+### Option B: Docker Compose (Recommended)
 ```bash
 docker compose up -d --build
 ```
 
-To view logs:
+View live logs:
 ```bash
 docker compose logs -f
 ```
@@ -87,7 +98,8 @@ docker compose logs -f
 
 ## ⌨️ Bot Commands
 
-- `/start` — View connection status, teams, and active Linear projects.
+- `/start` — View connection status, teams, active projects, and AI mode.
+- `/settings` — Toggle AI structuring ON/OFF and switch language (UA / EN).
 - `/reload` — Refresh teams and projects cache from Linear API without restarting.
 
 ---

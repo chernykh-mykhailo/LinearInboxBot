@@ -2,7 +2,7 @@ import logging
 from aiogram import Router, types
 from aiogram.filters import Command, CommandStart
 
-from src.config import is_authorized
+from src.config import is_authorized, GEMINI_API_KEY
 from src.linear_client import LinearClient
 
 logger = logging.getLogger(__name__)
@@ -19,14 +19,19 @@ def register_commands_router(linear: LinearClient) -> Router:
         projects = linear.get_projects()
         teams = linear.get_teams()
         team_names = ", ".join(t.get("name", "") for t in teams) or "None found"
+        ai_badge = "🟢 Gemini AI Active" if GEMINI_API_KEY else "⚪ AI Key Not Configured"
 
         await message.answer(
             f"⚡ <b>Linear Inbox Bot Active</b>\n\n"
             f"🏢 <b>Teams:</b> {team_names}\n"
+            f"🤖 <b>AI Mode:</b> {ai_badge}\n"
             f"📁 <b>Active Projects ({len(projects)}):</b>\n"
             + "\n".join(f"• {p.get('name')}" for p in projects[:10])
             + (f"\n<i>...and {len(projects) - 10} more</i>" if len(projects) > 10 else "")
-            + "\n\n💡 <i>Send any message, task idea, or screenshot to save it to Linear!</i>"
+            + "\n\n💡 <b>How to use:</b>\n"
+            + "• Send text, screenshot or <b>🎙 voice message</b> to create a task\n"
+            + "• Configure AI and language: /settings\n"
+            + "• Reload Linear projects: /reload"
         )
 
     @router.message(Command("reload"))

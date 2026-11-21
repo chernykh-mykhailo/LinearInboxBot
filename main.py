@@ -9,6 +9,7 @@ from aiogram.client.default import DefaultBotProperties
 from src.config import BOT_TOKEN, LINEAR_API_KEY
 from src.linear_client import LinearClient
 from src.handlers.commands import register_commands_router
+from src.handlers.settings import register_settings_router
 from src.handlers.issues import register_issues_router
 
 logging.basicConfig(
@@ -35,6 +36,7 @@ async def main():
 
     # Register modular routers
     dp.include_router(register_commands_router(linear))
+    dp.include_router(register_settings_router())
     dp.include_router(register_issues_router(linear))
 
     logger.info("Starting Telegram Bot Polling...")
