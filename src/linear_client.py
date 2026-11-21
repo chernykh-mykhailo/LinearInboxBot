@@ -42,7 +42,7 @@ class LinearClient:
               key
             }
           }
-          projects(filter: { state: { in: ["planned", "started"] } }) {
+          projects(filter: { state: { nin: ["completed", "canceled"] } }) {
             nodes {
               id
               name
