@@ -99,6 +99,7 @@ docker compose logs -f
 ## ⌨️ Bot Commands
 
 - `/start` — View connection status, teams, active projects, and AI mode.
+- `/tasks` — View active tasks with interactive project filters and direct issue links.
 - `/settings` — Toggle AI structuring ON/OFF and switch language (UA / EN).
 - `/reload` — Refresh teams and projects cache from Linear API without restarting.
 

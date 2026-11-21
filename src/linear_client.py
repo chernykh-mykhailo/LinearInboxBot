@@ -122,3 +122,42 @@ class LinearClient:
         if not result.get("success"):
             raise RuntimeError("Linear failed to create the issue.")
         return result.get("issue", {})
+
+    async def get_issues(
+        self,
+        project_id: Optional[str] = None,
+        limit: int = 10,
+    ) -> List[Dict[str, Any]]:
+        """Fetches active issues, optionally filtered by project."""
+        issue_filter: Dict[str, Any] = {
+            "state": {"type": {"nin": ["completed", "canceled"]}}
+        }
+        if project_id:
+            issue_filter["project"] = {"id": {"eq": project_id}}
+
+        query = """
+        query GetIssues($filter: IssueFilter, $first: Int) {
+          issues(filter: $filter, first: $first, orderBy: updatedAt) {
+            nodes {
+              id
+              identifier
+              title
+              priority
+              state {
+                name
+                type
+              }
+              project {
+                id
+                name
+              }
+              url
+            }
+          }
+        }
+        """
+        data = await self.execute_query(
+            query,
+            {"filter": issue_filter, "first": limit},
+        )
+        return data.get("issues", {}).get("nodes", [])

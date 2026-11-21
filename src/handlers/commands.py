@@ -30,6 +30,7 @@ def register_commands_router(linear: LinearClient) -> Router:
             + (f"\n<i>...and {len(projects) - 10} more</i>" if len(projects) > 10 else "")
             + "\n\n💡 <b>How to use:</b>\n"
             + "• Send text, screenshot or <b>🎙 voice message</b> to create a task\n"
+            + "• View and filter active tasks: /tasks\n"
             + "• Configure AI and language: /settings\n"
             + "• Reload Linear projects: /reload"
         )
